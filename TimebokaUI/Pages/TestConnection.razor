@@ -1,0 +1,23 @@
+﻿@inject IHourEntry hourEntry
+@page "/TestConnection"
+
+<h3>TestConnection</h3>
+
+<p>
+    There are @entries?.Count entries.<br />
+    There are @userEntries?.Count user entries.<br />
+    Incomplete: @isIncomplete;
+</p>
+
+@code {
+    private List<HourEntryModel> entries;
+    private List<HourEntryModel> userEntries;
+    private bool isIncomplete = false;
+
+    protected async override Task OnInitializedAsync()
+    {
+        entries = await hourEntry.GetAllHourEntries();
+        userEntries = await hourEntry.GetUserEntries();
+        isIncomplete = await hourEntry.CheckIfIncomplete();
+    }
+}

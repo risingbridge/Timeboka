@@ -1,0 +1,30 @@
+﻿@page "/CreateEntry"
+@inject NavigationManager navManager
+@inject IHourEntry hourEntry;
+
+<button @onclick="CreateNewEntry">Create Entry</button>
+
+@code {
+    void ClosePage()
+    {
+        navManager.NavigateTo("/");
+    }
+
+    private async Task CreateNewEntry()
+    {
+        DateTime start = DateTime.UtcNow;
+        //TODO: Change from Now to UtcNow;
+        DateTime end = DateTime.Now;
+        HourEntryModel entry = new HourEntryModel();
+        entry.UserId = "user1";
+        entry.StartTime = start;
+        entry.EndTime = end;
+        entry.Span = end - start;
+        entry.Complete = true;
+        entry.Comment = "This is a comment";
+
+        await hourEntry.CreateEntry(entry);
+        entry = new();
+        ClosePage();
+    }
+}
