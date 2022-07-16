@@ -9,7 +9,9 @@ public class DbConnection : IDbConnection
     private string _connectionId = "MongoDB";
 
     public string HourEntryCollectionName { get; private set; } = "entries";
+    public string UserCollectionName { get; private set; } = "users";
     public IMongoCollection<HourEntryModel> HourEntryCollection { get; set; }
+    public IMongoCollection<UserModel> UserCollection { get; set; }
 
     public MongoClient Client { get; set; }
 
@@ -23,5 +25,6 @@ public class DbConnection : IDbConnection
         _db = Client.GetDatabase(DbName);
 
         HourEntryCollection = _db.GetCollection<HourEntryModel>(HourEntryCollectionName);
+        UserCollection = _db.GetCollection<UserModel>(UserCollectionName);
     }
 }

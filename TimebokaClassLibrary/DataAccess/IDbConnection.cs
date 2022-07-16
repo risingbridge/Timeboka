@@ -7,5 +7,7 @@ public interface IDbConnection
     string DbName { get; set; }
     
     string HourEntryCollectionName { get; }
+    string UserCollectionName { get; }
     IMongoCollection<HourEntryModel> HourEntryCollection { get; }
+    IMongoCollection<UserModel> UserCollection { get; }
 }

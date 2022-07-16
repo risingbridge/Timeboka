@@ -1,20 +1,55 @@
 ﻿@page "/"
 @inject NavigationManager navManager
+@inject IHourEntry hourEntry
 
 <PageTitle>Index</PageTitle>
 
 <h1>Hello, world!</h1>
+<p>
+    There are @entries?.Count entries.<br />
+    There are @userEntries?.Count user entries.<br />
+    Incomplete: @isIncomplete;
+</p>
 
-<button @onclick="TestConnection">Test Connection</button>
-<button @onclick="CreateEntry">Create Entry</button>
-
-
-
-@code
+@if (isIncomplete)
 {
-    void TestConnection()
+    <p>Incomplete ID: @lastId</p>
+    <button @onclick="StopEntry">Stop Entry</button>
+}else{
+    <button @onclick="StartEntry">Start Entry</button>
+}
+
+
+@code {
+    private List<HourEntryModel> entries;
+    private List<HourEntryModel> userEntries;
+    private bool isIncomplete = false;
+    private string lastId = string.Empty;
+    private HourEntryModel? lastEntry = null;
+
+    protected async override Task OnInitializedAsync()
     {
-        navManager.NavigateTo("/TestConnection");
+        entries = await hourEntry.GetAllHourEntries();
+        userEntries = await hourEntry.GetUserEntries();
+        lastEntry = await hourEntry.GetLastUserEntry();
+        if(lastEntry is not null)
+        {
+            lastId = lastEntry.Id;
+            isIncomplete = !lastEntry.Complete;
+        }
+    }
+
+    private async Task StartEntry()
+    {
+        //TODO: UserLookup
+        await hourEntry.StartNewEntry("user1");
+        navManager.NavigateTo("/", forceLoad:true);
+    }
+
+    private async Task StopEntry()
+    {
+        await hourEntry.StopEntry(lastId);
+        navManager.NavigateTo("/", forceLoad:true);
     }
 
     void CreateEntry()

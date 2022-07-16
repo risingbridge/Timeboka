@@ -58,4 +58,89 @@ public class MongoHourEntry : IHourEntry
         }
         return incomplete;
     }
+
+    public async Task<string> FindIncomplete()
+    {
+        string incompleteId = string.Empty;
+        //TODO: User Lookup
+        var result = await _entries.FindAsync(e => e.UserId == "user1" && e.Complete == false);
+        if (result.ToList().Count > 1)
+        {
+            incompleteId = result.ToList().Last().Id;
+        }
+        else
+        {
+            incompleteId = result.ToList()[0].Id;
+        }
+        return incompleteId;
+    }
+
+    public async Task<HourEntryModel?> GetLastUserEntry()
+    {
+        //TODO: User Lookup
+        var result = await _entries.FindAsync(e => e.UserId == "user1");
+        List<HourEntryModel> entries = await result.ToListAsync();
+        if(entries.Count < 1)
+        {
+            return null;
+        }
+        else
+        {
+            return entries.Last();
+        }
+    }
+
+    public async Task StartNewEntry(string userId)
+    {
+        DateTime startTime = DateTime.UtcNow;
+        DateTime endTime = DateTime.UtcNow;
+        
+        HourEntryModel entry = new HourEntryModel();
+        entry.UserId = userId;
+        entry.StartTime = startTime;
+        entry.EndTime = endTime;
+        entry.Span = endTime - startTime;
+        entry.Complete = false;
+        entry.Comment = string.Empty;
+
+        var client = _db.Client;
+        using var session = await client.StartSessionAsync();
+        session.StartTransaction();
+        try
+        {
+            var db = client.GetDatabase(_db.DbName);
+            var entriesInTransaction = db.GetCollection<HourEntryModel>(_db.HourEntryCollectionName);
+            await entriesInTransaction.InsertOneAsync(session, entry);
+            await session.CommitTransactionAsync();
+        }
+        catch (Exception ex)
+        {
+            await session.AbortTransactionAsync();
+            throw;
+        }
+    }
+
+    public async Task StopEntry(string entryId)
+    {
+        var client = _db.Client;
+        using var session = await client.StartSessionAsync();
+        session.StartTransaction();
+
+        try
+        {
+            var db = client.GetDatabase(_db.DbName);
+            var entriesInTransaction = db.GetCollection<HourEntryModel>(_db.HourEntryCollectionName);
+            var entry = (await entriesInTransaction.FindAsync(e => e.Id == entryId)).First();
+            entry.EndTime = DateTime.UtcNow;
+            entry.Span = entry.EndTime - entry.StartTime;
+            entry.Complete = true;
+            await entriesInTransaction.ReplaceOneAsync(session, e => e.Id == entryId, entry);
+            await session.CommitTransactionAsync();
+        }
+        catch (Exception ex)
+        {
+            await session.AbortTransactionAsync();
+            throw;
+        }
+    }
 }
